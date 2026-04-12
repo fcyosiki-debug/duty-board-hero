@@ -429,75 +429,82 @@ export default function KidsView({ onNavigateToAdmin }: KidsViewProps) {
       {/* Completion Dialog */}
       <AnimatePresence>
         {selectedSlot && (
-          <div className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-white p-8 rounded-[2rem] shadow-2xl max-w-lg w-full relative"
-            >
-              <button
-                className="absolute top-4 right-4 w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center hover:bg-slate-200 text-slate-500"
-                onClick={() => setSelectedSlot(null)}
+          <div
+            className="fixed inset-0 z-40 overflow-y-auto bg-slate-900/40 backdrop-blur-sm"
+            style={{ minHeight: '100dvh' }}
+            onClick={(e) => { if (e.target === e.currentTarget) setSelectedSlot(null); }}
+          >
+            <div className="flex items-center justify-center min-h-full p-4">
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                className="bg-white p-6 sm:p-8 rounded-[2rem] shadow-2xl w-full relative"
+                style={{ maxWidth: 'min(32rem, calc(100vw - 2rem))' }}
               >
-                <LucideIcons.X size={24} />
-              </button>
+                <button
+                  className="absolute top-3 right-3 w-10 h-10 sm:w-12 sm:h-12 bg-slate-100 rounded-full flex items-center justify-center hover:bg-slate-200 text-slate-500 z-10"
+                  onClick={() => setSelectedSlot(null)}
+                >
+                  <LucideIcons.X size={20} />
+                </button>
 
-              {!showProxySelect ? (
-                <>
-                  <div className="text-center mb-8">
-                    {(() => {
-                      const slot = dutySlots.find(s => s.id === selectedSlot.slotId);
-                      const student = slot ? getStudentForSlot(slot.position) : undefined;
-                      return (
-                        <h3 className="text-3xl font-black text-slate-800 mb-2">
-                          {student ? `${student.name}さん、` : ''}おわりましたか？
-                        </h3>
-                      );
-                    })()}
-                    <p className="text-slate-500 text-lg">どうやっておわったか おしえてね</p>
-                  </div>
-                  <div className="space-y-4">
-                    <button
-                      className="w-full h-20 bg-blue-400 text-white rounded-2xl text-2xl font-bold shadow-lg hover:bg-blue-500 active:scale-95 transition-all"
-                      onClick={() => completeAssignment('normal')}
-                    >
-                      👍 じぶんでやりました
-                    </button>
-                    <button
-                      className="w-full h-20 bg-gradient-to-r from-yellow-400 via-amber-400 to-yellow-500 text-white rounded-2xl text-2xl font-bold shadow-lg hover:brightness-110 active:scale-95 transition-all ring-2 ring-yellow-300"
-                      onClick={() => setShowProxySelect(true)}
-                    >
-                      🦸 かわりにやりました (ヒーロー)
-                    </button>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="text-center mb-6">
-                    <h3 className="text-2xl font-black text-amber-500 mb-2">ヒーローはだれですか？</h3>
-                    <p className="text-slate-500">かわりにやってくれたひとの なまえをえらんでね</p>
-                  </div>
-                  <div className="max-h-64 overflow-y-auto pr-2 grid grid-cols-2 gap-2 mb-6">
-                    {students.map(s => (
+                {!showProxySelect ? (
+                  <>
+                    <div className="text-center mb-6 sm:mb-8 pr-10">
+                      {(() => {
+                        const slot = dutySlots.find(s => s.id === selectedSlot.slotId);
+                        const student = slot ? getStudentForSlot(slot.position) : undefined;
+                        return (
+                          <h3 className="text-2xl sm:text-3xl font-black text-slate-800 mb-2">
+                            {student ? `${student.name}さん、` : ''}おわりましたか？
+                          </h3>
+                        );
+                      })()}
+                      <p className="text-slate-500 text-base sm:text-lg">どうやっておわったか おしえてね</p>
+                    </div>
+                    <div className="space-y-3 sm:space-y-4">
                       <button
-                        key={s.id}
-                        className="p-4 rounded-xl border-2 border-slate-200 hover:border-amber-400 hover:bg-amber-50 text-lg font-bold text-slate-700 transition-colors"
-                        onClick={() => completeAssignment('hero', s.id)}
+                        className="w-full min-h-[3.5rem] sm:min-h-[5rem] py-3 bg-blue-400 text-white rounded-2xl text-xl sm:text-2xl font-bold shadow-lg hover:bg-blue-500 active:scale-95 transition-all"
+                        onClick={() => completeAssignment('normal')}
                       >
-                        {s.name}
+                        👍 じぶんでやりました
                       </button>
-                    ))}
-                  </div>
-                  <button
-                    className="w-full p-3 rounded-xl bg-slate-100 text-slate-600 font-bold hover:bg-slate-200 transition-colors"
-                    onClick={() => setShowProxySelect(false)}
-                  >
-                    もどる
-                  </button>
-                </>
-              )}
-            </motion.div>
+                      <button
+                        className="w-full min-h-[3.5rem] sm:min-h-[5rem] py-3 bg-gradient-to-r from-yellow-400 via-amber-400 to-yellow-500 text-white rounded-2xl text-xl sm:text-2xl font-bold shadow-lg hover:brightness-110 active:scale-95 transition-all ring-2 ring-yellow-300"
+                        onClick={() => setShowProxySelect(true)}
+                      >
+                        🦸 かわりにやりました (ヒーロー)
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="text-center mb-4 sm:mb-6 pr-10">
+                      <h3 className="text-xl sm:text-2xl font-black text-amber-500 mb-2">ヒーローはだれですか？</h3>
+                      <p className="text-slate-500 text-sm sm:text-base">かわりにやってくれたひとの なまえをえらんでね</p>
+                    </div>
+                    <div className="overflow-y-auto pr-2 grid grid-cols-2 gap-2 mb-4 sm:mb-6" style={{ maxHeight: 'min(16rem, calc(100dvh - 14rem))' }}>
+                      {students.map(s => (
+                        <button
+                          key={s.id}
+                          className="p-3 sm:p-4 rounded-xl border-2 border-slate-200 hover:border-amber-400 hover:bg-amber-50 text-base sm:text-lg font-bold text-slate-700 transition-colors"
+                          onClick={() => completeAssignment('hero', s.id)}
+                        >
+                          {s.name}
+                        </button>
+                      ))}
+                    </div>
+                    <button
+                      className="w-full p-3 rounded-xl bg-slate-100 text-slate-600 font-bold hover:bg-slate-200 transition-colors"
+                      onClick={() => setShowProxySelect(false)}
+                    >
+                      もどる
+                    </button>
+                  </>
+                )}
+              </motion.div>
+            </div>
           </div>
         )}
       </AnimatePresence>
