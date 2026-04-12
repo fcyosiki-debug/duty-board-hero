@@ -130,10 +130,28 @@ export default function AdminView({ onNavigateToKids }: AdminViewProps) {
   };
 
   const updateSlot = (slotId: string, updates: Partial<DutySlot>) => {
-    setAppData(prev => ({
-      ...prev,
-      dutySlots: (prev.dutySlots || []).map(s => s.id === slotId ? { ...s, ...updates } : s)
-    }));
+    setAppData(prev => {
+      const currentSlot = (prev.dutySlots || []).find(s => s.id === slotId);
+      let newSlots = [...(prev.dutySlots || [])];
+      
+      if (updates.position !== undefined && currentSlot && currentSlot.position !== updates.position) {
+        // Swap positions if another slot has the target position
+        const targetPos = updates.position;
+        const oldPos = currentSlot.position;
+        newSlots = newSlots.map(s => {
+          if (s.id === slotId) return { ...s, ...updates };
+          if (s.position === targetPos) return { ...s, position: oldPos }; // Swap
+          return s;
+        });
+      } else {
+        newSlots = newSlots.map(s => s.id === slotId ? { ...s, ...updates } : s);
+      }
+
+      return {
+        ...prev,
+        dutySlots: newSlots
+      };
+    });
   };
 
   const sortedSlots = [...(appData.dutySlots || [])].sort((a, b) => a.position - b.position);
