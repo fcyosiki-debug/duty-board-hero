@@ -181,10 +181,29 @@ export default function KidsView({ onNavigateToAdmin }: KidsViewProps) {
 
   if (!dutySlots || dutySlots.length === 0 || students.length === 0) {
     return (
-      <div className="w-full h-screen flex flex-col items-center justify-center gap-4 p-8">
-        <LucideIcons.AlertCircle className="w-16 h-16 text-slate-300" />
-        <p className="text-2xl font-bold text-slate-400">当番スロットまたは児童が登録されていません</p>
-        <p className="text-slate-400">管理者画面から設定してください</p>
+      <div className="w-full h-screen flex flex-col items-center justify-center gap-6 p-8 relative bg-slate-50">
+        <div className="absolute top-4 right-4">
+          <button
+            onClick={onNavigateToAdmin}
+            className="text-slate-400 hover:text-slate-600 transition-colors bg-white hover:bg-slate-100 p-3 rounded-full shadow-md border border-slate-200 flex items-center justify-center"
+            title="管理画面へ"
+          >
+            <LucideIcons.Settings size={24} />
+          </button>
+        </div>
+        <div className="flex flex-col items-center justify-center gap-4 text-center">
+          <LucideIcons.AlertCircle className="w-20 h-20 text-slate-300" />
+          <p className="text-2xl md:text-3xl font-bold text-slate-500">当番スロットまたは児童が登録されていません</p>
+          <p className="text-slate-400 text-lg">右上の歯車ボタンから管理者画面を開き、初期設定を行ってください</p>
+          
+          <button
+            onClick={onNavigateToAdmin}
+            className="mt-6 flex items-center gap-2 px-6 py-3 bg-blue-500 text-white rounded-xl font-bold hover:bg-blue-600 transition-colors shadow-sm"
+          >
+            <LucideIcons.Settings size={20} />
+            設定をはじめる
+          </button>
+        </div>
       </div>
     );
   }
