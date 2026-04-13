@@ -59,6 +59,45 @@ export default function AdminView({ onNavigateToKids }: AdminViewProps) {
     setShowClearAllConfirm(false);
   };
 
+  const updateStudent = (id: string, updates: Partial<Student>) => {
+    setAppData(prev => ({
+      ...prev,
+      students: prev.students.map(s => s.id === id ? { ...s, ...updates } : s)
+    }));
+  };
+
+  const moveStudent = (index: number, direction: 'up' | 'down') => {
+    setAppData(prev => {
+      const sorted = [...prev.students].sort((a, b) => a.studentNumber - b.studentNumber);
+      if (direction === 'up' && index > 0) {
+        const tempNum = sorted[index].studentNumber;
+        const tempId = sorted[index].id;
+        const targetId = sorted[index - 1].id;
+        return {
+          ...prev,
+          students: prev.students.map(s => {
+            if (s.id === tempId) return { ...s, studentNumber: sorted[index - 1].studentNumber };
+            if (s.id === targetId) return { ...s, studentNumber: tempNum };
+            return s;
+          })
+        };
+      } else if (direction === 'down' && index < sorted.length - 1) {
+        const tempNum = sorted[index].studentNumber;
+        const tempId = sorted[index].id;
+        const targetId = sorted[index + 1].id;
+        return {
+          ...prev,
+          students: prev.students.map(s => {
+            if (s.id === tempId) return { ...s, studentNumber: sorted[index + 1].studentNumber };
+            if (s.id === targetId) return { ...s, studentNumber: tempNum };
+            return s;
+          })
+        };
+      }
+      return prev;
+    });
+  };
+
   const manualRotate = () => { resetDailyDuties(true); alert('ローテーションしました！'); };
   const manualReverseRotate = () => { reverseRotation(); alert('ローテーションを一つ戻しました！'); };
 
@@ -247,25 +286,47 @@ export default function AdminView({ onNavigateToKids }: AdminViewProps) {
                       <tbody>
                         {[...appData.students]
                           .sort((a, b) => a.studentNumber - b.studentNumber)
-                          .map((student) => (
-                          <tr key={student.id} className={cn("border-b hover:bg-slate-50", student.excludedFromRotation && "bg-red-50/50")}>
-                            <td className="p-3 text-slate-500">{student.studentNumber}</td>
-                            <td className="p-3 font-medium">
-                              {student.name}
-                              {student.excludedFromRotation && <span className="ml-2 text-xs text-red-400 font-bold">除外中</span>}
+                          .map((student, idx) => (
+                          <tr key={student.id} className={cn("border-b hover:bg-slate-50 transition-colors", student.excludedFromRotation && "bg-red-50/50")}>
+                            <td className="p-2">
+                              <input 
+                                type="number" 
+                                className="w-16 p-2 border rounded text-center text-slate-600 bg-white"
+                                value={student.studentNumber}
+                                onChange={(e) => updateStudent(student.id, { studentNumber: Number(e.target.value) || 0 })}
+                              />
                             </td>
-                            <td className="p-3 text-sm text-slate-400">{student.furigana}</td>
-                            <td className="p-3 border-l border-orange-100 bg-orange-50/30 text-center">
+                            <td className="p-2">
+                              <div className="flex flex-col gap-1">
+                                <div className="flex items-center gap-2">
+                                  <input 
+                                    className="w-full p-2 border rounded font-medium bg-white"
+                                    value={student.name}
+                                    onChange={(e) => updateStudent(student.id, { name: e.target.value })}
+                                  />
+                                  {student.excludedFromRotation && <span className="text-xs text-red-400 font-bold whitespace-nowrap">除外中</span>}
+                                </div>
+                              </div>
+                            </td>
+                            <td className="p-2 text-sm text-slate-400">
+                              <input 
+                                className="w-full p-2 border rounded bg-white"
+                                value={student.furigana || ''}
+                                placeholder="ふりがな"
+                                onChange={(e) => updateStudent(student.id, { furigana: e.target.value })}
+                              />
+                            </td>
+                            <td className="p-2 border-l border-orange-100 bg-orange-50/30 text-center">
                               <button
                                 onClick={() => toggleExclusion(student.id)}
-                                className={cn("w-8 h-8 rounded-full border-2 flex items-center justify-center transition-colors",
+                                className={cn("w-8 h-8 rounded-full border-2 flex items-center justify-center transition-colors mx-auto",
                                   student.excludedFromRotation ? "bg-red-500 border-red-500 text-white" : "bg-white border-slate-300 text-slate-300 hover:border-red-400"
                                 )}
                               >
                                 {student.excludedFromRotation ? <LucideIcons.X size={14}/> : <LucideIcons.Minus size={14}/>}
                               </button>
                             </td>
-                            <td className="p-3 border-l border-amber-100 bg-amber-50/50 text-center">
+                            <td className="p-2 border-l border-amber-100 bg-amber-50/50 text-center">
                               {student.proxyCount > 0 ? (
                                 <span className="inline-flex items-center gap-1 font-bold text-amber-600">
                                   <LucideIcons.Award className="w-4 h-4 fill-amber-500" />
@@ -275,13 +336,23 @@ export default function AdminView({ onNavigateToKids }: AdminViewProps) {
                                 <span className="text-slate-300">-</span>
                               )}
                             </td>
-                            <td className="p-3 text-center">
-                              <button 
-                                onClick={() => requestRemoveStudent(student.id)}
-                                className="p-2 text-slate-400 hover:text-red-500 rounded-lg hover:bg-red-50"
-                              >
-                                <LucideIcons.Trash2 size={16} />
-                              </button>
+                            <td className="p-2 text-center">
+                              <div className="flex items-center justify-center gap-1">
+                                <div className="flex flex-col gap-0.5 mr-1">
+                                  <button onClick={() => moveStudent(idx, 'up')} disabled={idx === 0} className="text-slate-300 hover:text-blue-500 disabled:opacity-30 disabled:hover:text-slate-300 transition-colors">
+                                    <LucideIcons.ChevronUp size={16} />
+                                  </button>
+                                  <button onClick={() => moveStudent(idx, 'down')} disabled={idx === appData.students.length - 1} className="text-slate-300 hover:text-blue-500 disabled:opacity-30 disabled:hover:text-slate-300 transition-colors">
+                                    <LucideIcons.ChevronDown size={16} />
+                                  </button>
+                                </div>
+                                <button 
+                                  onClick={() => requestRemoveStudent(student.id)}
+                                  className="p-2 text-slate-400 hover:text-red-500 rounded-lg hover:bg-red-50 transition-colors"
+                                >
+                                  <LucideIcons.Trash2 size={16} />
+                                </button>
+                              </div>
                             </td>
                           </tr>
                         ))}
