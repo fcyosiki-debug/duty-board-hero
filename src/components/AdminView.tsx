@@ -566,18 +566,31 @@ export default function AdminView({ onNavigateToKids }: AdminViewProps) {
                        a.click();
                        a.remove();
                      }}>エクスポート</Button>
-                     <Button variant="ghost" onClick={() => {
-                       const input = prompt('JSONデータを貼り付けてください。');
-                       if(input) {
-                         try {
-                           const parsed = JSON.parse(input);
-                           if(parsed && parsed.students) {
-                             setAppData(parsed);
-                             alert('復元しました。');
-                           }
-                         } catch { alert('無効なJSONです。'); }
-                       }
-                     }}>インポート (復元)</Button>
+                      <Button variant="ghost" onClick={() => {
+                        const fileInput = document.createElement('input');
+                        fileInput.type = 'file';
+                        fileInput.accept = '.json,application/json';
+                        fileInput.onchange = (e) => {
+                          const target = e.target as HTMLInputElement;
+                          const file = target.files?.[0];
+                          if (!file) return;
+                          const reader = new FileReader();
+                          reader.onload = (ev) => {
+                            try {
+                              const text = ev.target?.result as string;
+                              const parsed = JSON.parse(text);
+                              if (parsed && parsed.students) {
+                                setAppData(parsed);
+                                alert('復元しました。');
+                              } else {
+                                alert('無効なデータです。');
+                              }
+                            } catch { alert('無効なJSONです。'); }
+                          };
+                          reader.readAsText(file);
+                        };
+                        fileInput.click();
+                      }}>インポート (復元)</Button>
                    </div>
                  </div>
                </section>
