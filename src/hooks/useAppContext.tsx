@@ -67,6 +67,24 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         migrated = true;
       }
 
+      // Ensure that dutySlots have strictly unique positions to prevent display overlaps 
+      // where multiple items share a coordinate, which causes fewer visible slots to be detected.
+      if (newPrev.dutySlots && newPrev.dutySlots.length > 0) {
+        const positionCounts = new Map<number, number>();
+        newPrev.dutySlots.forEach(s => {
+          positionCounts.set(s.position, (positionCounts.get(s.position) || 0) + 1);
+        });
+        
+        const hasDuplicates = Array.from(positionCounts.values()).some(count => count > 1);
+        
+        if (hasDuplicates) {
+          newPrev.dutySlots = [...newPrev.dutySlots]
+            .sort((a, b) => a.position - b.position)
+            .map((s, i) => ({ ...s, position: i + 1 }));
+          migrated = true;
+        }
+      }
+
       if (migrated) {
         return newPrev;
       }
