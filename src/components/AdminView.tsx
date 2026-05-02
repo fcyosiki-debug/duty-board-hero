@@ -6,15 +6,15 @@ import { Button, cn } from '@/components/ui';
 import * as LucideIcons from 'lucide-react';
 import { Student, DutySlot } from '@/types';
 
-type Tab = 'students' | 'slots' | 'rewards' | 'settings';
+type Tab = 'today' | 'students' | 'slots' | 'rewards' | 'settings';
 
 interface AdminViewProps {
   onNavigateToKids?: () => void;
 }
 
 export default function AdminView({ onNavigateToKids }: AdminViewProps) {
-  const { appData, setAppData, resetDailyDuties, reverseRotation } = useAppContext();
-  const [activeTab, setActiveTab] = useState<Tab>('students');
+  const { appData, setAppData, resetDailyDuties, reverseRotation, getStudentForSlot } = useAppContext();
+  const [activeTab, setActiveTab] = useState<Tab>('today');
   
   // Custom Confirm Modals State
   const [studentToDelete, setStudentToDelete] = useState<string | null>(null);
@@ -22,6 +22,27 @@ export default function AdminView({ onNavigateToKids }: AdminViewProps) {
   
   // Bulk Import state
   const [pasteData, setPasteData] = useState('');
+
+  const revertCompletion = (slotId: string, cell: 'upper' | 'lower') => {
+    if (window.confirm('この当番の完了状態を「未完了」に戻しますか？')) {
+      setAppData(prev => {
+        const newCompletions = (prev.slotAssignment?.completions || []).map(c => {
+          if (c.slotId === slotId) {
+            return {
+              ...c,
+              upperCompleted: cell === 'upper' ? false : c.upperCompleted,
+              lowerCompleted: cell === 'lower' ? false : c.lowerCompleted,
+            };
+          }
+          return c;
+        });
+        return {
+          ...prev,
+          slotAssignment: prev.slotAssignment ? { ...prev.slotAssignment, completions: newCompletions } : null
+        };
+      });
+    }
+  };
 
   const handleBulkImport = () => {
     if (!pasteData.trim()) return;
@@ -214,6 +235,7 @@ export default function AdminView({ onNavigateToKids }: AdminViewProps) {
         {/* Sidebar Tabs */}
         <div className="w-full md:w-64 flex flex-col gap-2">
           {[
+            { id: 'today', label: '本日の状況（取消）', icon: LucideIcons.CalendarCheck },
             { id: 'students', label: '児童管理＆ヒーローログ', icon: LucideIcons.Users },
             { id: 'slots', label: '当番スロット設定', icon: LucideIcons.Briefcase },
             { id: 'rewards', label: 'メッセージ設定', icon: LucideIcons.MessageSquare },
@@ -237,6 +259,75 @@ export default function AdminView({ onNavigateToKids }: AdminViewProps) {
 
         {/* Content Area */}
         <div className="flex-1 min-w-0 bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+
+          {/* ===== TODAY TAB ===== */}
+          {activeTab === 'today' && (
+            <div className="space-y-6">
+              <div className="flex justify-between items-center border-b pb-2 mb-4">
+                <h2 className="text-xl font-bold">本日の当番完了状況</h2>
+              </div>
+              <p className="text-sm text-slate-500 mb-4">
+                誤って当番完了ボタンを押してしまった場合に、ここから「未完了」の状態に戻すことができます。
+              </p>
+              
+              <div className="space-y-3">
+                {sortedSlots.map(slot => {
+                  const student = getStudentForSlot(slot.position);
+                  const completion = appData.slotAssignment?.completions.find(c => c.slotId === slot.id);
+                  
+                  return (
+                    <div key={slot.id} className="p-4 border rounded-xl bg-slate-50 flex flex-col gap-2">
+                      <div className="font-bold text-lg text-slate-800 border-b pb-1">
+                        {student ? student.name : '（担当者なし）'}
+                      </div>
+                      <div className="flex flex-col sm:flex-row gap-4 mt-2">
+                        {/* Upper Duty */}
+                        {slot.upperDutyName && (
+                          <div className="flex-1 flex items-center justify-between p-3 bg-white rounded-lg border">
+                            <div className="flex items-center gap-2">
+                              {completion?.upperCompleted ? (
+                                <LucideIcons.CheckCircle2 className="text-green-500 w-6 h-6" />
+                              ) : (
+                                <LucideIcons.Circle className="text-slate-300 w-6 h-6" />
+                              )}
+                              <span className="font-bold">{slot.upperDutyName}</span>
+                            </div>
+                            {completion?.upperCompleted && (
+                              <Button size="sm" variant="outline" className="text-red-500 hover:text-red-600 hover:bg-red-50 border-red-200" onClick={() => revertCompletion(slot.id, 'upper')}>
+                                取消（未完了に戻す）
+                              </Button>
+                            )}
+                          </div>
+                        )}
+                        
+                        {/* Lower Duty */}
+                        {slot.lowerDutyName && (
+                          <div className="flex-1 flex items-center justify-between p-3 bg-white rounded-lg border">
+                            <div className="flex items-center gap-2">
+                              {completion?.lowerCompleted ? (
+                                <LucideIcons.CheckCircle2 className="text-green-500 w-6 h-6" />
+                              ) : (
+                                <LucideIcons.Circle className="text-slate-300 w-6 h-6" />
+                              )}
+                              <span className="font-bold">{slot.lowerDutyName}</span>
+                            </div>
+                            {completion?.lowerCompleted && (
+                              <Button size="sm" variant="outline" className="text-red-500 hover:text-red-600 hover:bg-red-50 border-red-200" onClick={() => revertCompletion(slot.id, 'lower')}>
+                                取消（未完了に戻す）
+                              </Button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+                {sortedSlots.length === 0 && (
+                  <p className="text-slate-400 text-center py-8">スロットがありません。</p>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* ===== STUDENTS TAB ===== */}
           {activeTab === 'students' && (
