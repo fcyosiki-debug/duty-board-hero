@@ -293,7 +293,7 @@ export default function AdminView({ onNavigateToKids }: AdminViewProps) {
                               <span className="font-bold">{slot.upperDutyName}</span>
                             </div>
                             {completion?.upperCompleted && (
-                              <Button size="sm" variant="outline" className="text-red-500 hover:text-red-600 hover:bg-red-50 border-red-200" onClick={() => revertCompletion(slot.id, 'upper')}>
+                              <Button size="sm" variant="ghost" className="text-red-500 hover:text-red-600 hover:bg-red-50 border-red-200 border" onClick={() => revertCompletion(slot.id, 'upper')}>
                                 取消（未完了に戻す）
                               </Button>
                             )}
@@ -312,7 +312,7 @@ export default function AdminView({ onNavigateToKids }: AdminViewProps) {
                               <span className="font-bold">{slot.lowerDutyName}</span>
                             </div>
                             {completion?.lowerCompleted && (
-                              <Button size="sm" variant="outline" className="text-red-500 hover:text-red-600 hover:bg-red-50 border-red-200" onClick={() => revertCompletion(slot.id, 'lower')}>
+                              <Button size="sm" variant="ghost" className="text-red-500 hover:text-red-600 hover:bg-red-50 border-red-200 border" onClick={() => revertCompletion(slot.id, 'lower')}>
                                 取消（未完了に戻す）
                               </Button>
                             )}
