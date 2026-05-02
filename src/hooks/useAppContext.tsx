@@ -83,6 +83,23 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             .map((s, i) => ({ ...s, position: i + 1 }));
           migrated = true;
         }
+
+        // Ensure that dutySlots have strictly unique IDs. If a user copy-pasted a slot in JSON,
+        // duplicate IDs would cause multiple slots to share the same completion state.
+        const seenIds = new Set<string>();
+        let hasDuplicateIds = false;
+        newPrev.dutySlots = newPrev.dutySlots.map(slot => {
+          if (seenIds.has(slot.id)) {
+            hasDuplicateIds = true;
+            return { ...slot, id: crypto.randomUUID() };
+          }
+          seenIds.add(slot.id);
+          return slot;
+        });
+
+        if (hasDuplicateIds) {
+          migrated = true;
+        }
       }
 
       if (migrated) {
