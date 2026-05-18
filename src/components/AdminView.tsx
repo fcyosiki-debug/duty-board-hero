@@ -61,7 +61,6 @@ export default function AdminView({ onNavigateToKids }: AdminViewProps) {
     setAppData(prev => ({
       ...prev,
       students: [...prev.students, ...newStudents],
-      lastResetDate: '' // trigger re-assignment
     }));
     setPasteData('');
     alert(`${newStudents.length}名の児童を追加しました`);
@@ -70,13 +69,13 @@ export default function AdminView({ onNavigateToKids }: AdminViewProps) {
   const requestRemoveStudent = (id: string) => setStudentToDelete(id);
   const confirmRemoveStudent = () => {
     if (studentToDelete) {
-      setAppData(prev => ({ ...prev, students: prev.students.filter(s => s.id !== studentToDelete), lastResetDate: '' }));
+      setAppData(prev => ({ ...prev, students: prev.students.filter(s => s.id !== studentToDelete) }));
       setStudentToDelete(null);
     }
   };
   const requestClearStudents = () => setShowClearAllConfirm(true);
   const confirmClearStudents = () => {
-    setAppData(prev => ({ ...prev, students: [], lastResetDate: '' }));
+    setAppData(prev => ({ ...prev, students: [] }));
     setShowClearAllConfirm(false);
   };
 
@@ -177,7 +176,6 @@ export default function AdminView({ onNavigateToKids }: AdminViewProps) {
         upperDutyName: '新しい仕事',
         groupId: null,
       }],
-      lastResetDate: '' // trigger reset
     }));
   };
 
@@ -185,7 +183,6 @@ export default function AdminView({ onNavigateToKids }: AdminViewProps) {
     setAppData(prev => ({
       ...prev,
       dutySlots: (prev.dutySlots || []).filter(s => s.id !== slotId),
-      lastResetDate: ''
     }));
   };
 

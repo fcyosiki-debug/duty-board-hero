@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
 import { AppData, defaultAppData, DailySlotAssignment, SlotCompletion, Student, DutySlot } from '@/types';
 import { useLocalStorage } from './useLocalStorage';
 
@@ -102,6 +102,34 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         }
       }
 
+      // Ensure slotAssignment.completions is in sync with dutySlots.
+      // When slots are added/removed outside of resetDailyDuties, the completions
+      // array may be missing entries for new slots. This fills the gap WITHOUT
+      // resetting existing completion states.
+      if (newPrev.slotAssignment && newPrev.dutySlots && newPrev.dutySlots.length > 0) {
+        const existingSlotIds = new Set(newPrev.slotAssignment.completions.map(c => c.slotId));
+        const currentSlotIds = new Set(newPrev.dutySlots.map(s => s.id));
+
+        // Add missing completions for new slots
+        const missingSlots = newPrev.dutySlots.filter(s => !existingSlotIds.has(s.id));
+        // Remove completions for deleted slots
+        const staleSlotsExist = newPrev.slotAssignment.completions.some(c => !currentSlotIds.has(c.slotId));
+
+        if (missingSlots.length > 0 || staleSlotsExist) {
+          const keptCompletions = newPrev.slotAssignment.completions.filter(c => currentSlotIds.has(c.slotId));
+          const newCompletions = missingSlots.map(s => ({
+            slotId: s.id,
+            upperCompleted: false,
+            lowerCompleted: false,
+          }));
+          newPrev.slotAssignment = {
+            ...newPrev.slotAssignment,
+            completions: [...keptCompletions, ...newCompletions],
+          };
+          migrated = true;
+        }
+      }
+
       if (migrated) {
         return newPrev;
       }
@@ -150,10 +178,15 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   };
 
   // Reset daily slot assignments
-  const resetDailyDuties = (forceRotate = false) => {
+  const resetDailyDuties = useCallback((forceRotate = false) => {
     setAppData(prev => {
       const today = new Date().toISOString().split('T')[0];
       
+      // Guard: if today's assignment already exists and we're not forcing, skip
+      if (!forceRotate && prev.lastResetDate === today && prev.slotAssignment?.date === today) {
+        return prev;
+      }
+
       const activeStudents = prev.students.filter(s => !s.excludedFromRotation);
       if (activeStudents.length === 0 || !prev.dutySlots || prev.dutySlots.length === 0) {
         return { ...prev, lastResetDate: today, slotAssignment: { date: today, completions: [] } };
@@ -196,9 +229,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         }
       };
     });
-  };
+  }, [setAppData]);
 
-  const reverseRotation = () => {
+  const reverseRotation = useCallback(() => {
     setAppData(prev => {
       const today = new Date().toISOString().split('T')[0];
       const activeStudents = prev.students.filter(s => !s.excludedFromRotation);
@@ -225,9 +258,13 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         }
       };
     });
-  };
+  }, [setAppData]);
 
-  // Daily reset trigger
+  // Daily reset trigger — only fires when the calendar date changes.
+  // We use lastResetDate and slotAssignment.date to detect if today's
+  // assignments have already been created. We intentionally do NOT
+  // depend on appData.lastResetDate to avoid re-firing when admin
+  // operations modify it.
   useEffect(() => {
     if (isMounted) {
       const today = new Date().toISOString().split('T')[0];
@@ -235,7 +272,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         resetDailyDuties();
       }
     }
-  }, [isMounted, appData.lastResetDate, appData.slotAssignment?.date]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isMounted, resetDailyDuties]);
 
 
   return (
