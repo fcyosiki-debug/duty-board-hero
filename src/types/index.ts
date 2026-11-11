@@ -1,3 +1,5 @@
+import { localToday } from '@/lib/date';
+
 export interface Student {
   id: string;
   studentNumber: number;
@@ -142,7 +144,7 @@ export const defaultAppData: AppData = {
     lastRotatedDate: null,
     currentDutyIndex: 0
   },
-  lastResetDate: new Date().toISOString().split('T')[0],
+  lastResetDate: localToday(),
   extraBoards: [],
   boardTitle: 'きょうの おとうばん',
   boardSubtitle: 'みんなのためによろしくね！'

@@ -3,6 +3,8 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
 import { AppData, defaultAppData, DailySlotAssignment, SlotCompletion, Student, DutySlot } from '@/types';
 import { useLocalStorage } from './useLocalStorage';
+import { localToday } from '@/lib/date';
+import { pushToRenraku } from '@/lib/renrakuSync';
 
 type AppContextType = {
   appData: AppData;
@@ -180,7 +182,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   // Reset daily slot assignments
   const resetDailyDuties = useCallback((forceRotate = false) => {
     setAppData(prev => {
-      const today = new Date().toISOString().split('T')[0];
+      const today = localToday();
       
       // Guard: if today's assignment already exists and we're not forcing, skip
       if (!forceRotate && prev.lastResetDate === today && prev.slotAssignment?.date === today) {
@@ -233,7 +235,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   const reverseRotation = useCallback(() => {
     setAppData(prev => {
-      const today = new Date().toISOString().split('T')[0];
+      const today = localToday();
       const activeStudents = prev.students.filter(s => !s.excludedFromRotation);
       if (activeStudents.length === 0) return prev;
 
@@ -267,13 +269,21 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   // operations modify it.
   useEffect(() => {
     if (isMounted) {
-      const today = new Date().toISOString().split('T')[0];
+      const today = localToday();
       if (appData.lastResetDate !== today || !appData.slotAssignment || appData.slotAssignment.date !== today) {
         resetDailyDuties();
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isMounted, resetDailyDuties]);
+
+  // 連絡アプリと連携しているときは、データが変わるたびに送る。
+  // 完了ボタンが続けて押されても1回にまとめるため、少し待ってから送る。
+  useEffect(() => {
+    if (!isMounted) return;
+    const timer = setTimeout(() => { pushToRenraku(appData); }, 2000);
+    return () => clearTimeout(timer);
+  }, [isMounted, appData]);
 
 
   return (

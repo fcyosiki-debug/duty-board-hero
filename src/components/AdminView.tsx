@@ -5,6 +5,7 @@ import { useAppContext } from '@/hooks/useAppContext';
 import { Button, cn } from '@/components/ui';
 import * as LucideIcons from 'lucide-react';
 import { Student, DutySlot } from '@/types';
+import RenrakuSyncSettings from '@/components/RenrakuSyncSettings';
 
 type Tab = 'today' | 'students' | 'slots' | 'rewards' | 'settings';
 
@@ -708,6 +709,7 @@ export default function AdminView({ onNavigateToKids }: AdminViewProps) {
                    </div>
                  </div>
                </section>
+               <RenrakuSyncSettings />
                <section>
                  <h2 className="text-xl font-bold border-b pb-2 mb-4">データ管理</h2>
                  <div className="p-4 bg-orange-50 border border-orange-200 rounded-xl">
